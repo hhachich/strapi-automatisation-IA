@@ -315,9 +315,9 @@ Sélectionnez import from file en cliquant sur trois petits points : Autres macr
 ![51.png](/images/51.png)
 
 - Les workflows de n8n utilisés dans les exemples sont les suivants : 
-[strapi_generation_description.json](/images/strapi_generation_description.json)
-[strapi_generation_image_description.json](/images/strapi_generation_image_description.json)
-[strapi_generation_descrption_to_image.json](/images/strapi_generation_descrption_to_image.json)
+- [strapi_generation_description.json](/images/strapi_generation_description.json)
+- [strapi_generation_image_description.json](/images/strapi_generation_image_description.json)
+- [strapi_generation_descrption_to_image.json](/images/strapi_generation_descrption_to_image.json)
 
 
 # Comment utiliser un webhook pour générer du contenu grâce à l'IA lors de la réception d'une entrée ?
