@@ -1,0 +1,285 @@
+{
+  "name": "strapi génération image description",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "3e8d6d34-4cf4-461a-ad0e-984f0a7d21f0",
+      "name": "When clicking \"Test workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "1b181e76-da10-485d-89b3-aea38b84abbd",
+              "leftValue": "={{ $json.attributes.image.data.attributes.name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "d455c311-3ec2-4b58-97f9-99d02ecbae1f",
+              "leftValue": "={{ $json.attributes.description }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "03220dda-78bd-48f1-91fd-6c648105c233",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": "={{1}}",
+        "options": {}
+      },
+      "id": "5962ee17-ab23-4c72-b552-e93a61c0b1b7",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2020,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "13571591-699c-4c9c-b2ee-02129bfb04a9",
+              "name": "id",
+              "value": "={{ $('Loop Over Items').item.json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "8576c416-80a7-41c0-8bbb-946cdc0a1789",
+              "name": "description",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "97e29af4-a42a-4383-b81b-1fc3212cbab5",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        2660,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "contentType": "post-image-descriptions?populate=*",
+        "returnAll": true,
+        "options": {
+          "sort": [],
+          "where": "="
+        }
+      },
+      "id": "28a5652e-5422-494c-b7c8-622c293e1ea5",
+      "name": "getData",
+      "type": "n8n-nodes-base.strapi",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        260
+      ],
+      "credentials": {
+        "strapiApi": {
+          "id": "ta2Pcj3sErKltQJw",
+          "name": "Strapi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "mistralai/Mistral-7B-Instruct-v0.3",
+        "options": {}
+      },
+      "id": "7c2f1bcf-0590-403c-9aee-7fa1f3797548",
+      "name": "Hugging Face Inference Model mistralai",
+      "type": "@n8n/n8n-nodes-langchain.lmOpenHuggingFaceInference",
+      "typeVersion": 1,
+      "position": [
+        2300,
+        480
+      ],
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "QhGMVnWtrW2nMHZK",
+          "name": "HuggingFaceApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "contentType": "=post-image-descriptions",
+        "columns": "=description"
+      },
+      "id": "367ffea6-de1f-4f66-b780-4649a9ce6354",
+      "name": "updateData",
+      "type": "n8n-nodes-base.strapi",
+      "typeVersion": 1,
+      "position": [
+        2900,
+        260
+      ],
+      "credentials": {
+        "strapiApi": {
+          "id": "ta2Pcj3sErKltQJw",
+          "name": "Strapi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=génére une courte description pour l'image  {{ $json.attributes.image.data.attributes.name }}"
+      },
+      "id": "0c35e532-b997-41fa-ac5b-f20ce2666dea",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        2280,
+        260
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking \"Test workflow\"": {
+      "main": [
+        [
+          {
+            "node": "getData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "updateData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hugging Face Inference Model mistralai": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "updateData": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getData": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "279fa858-75b3-4a71-9972-7ea2c2c4ca72",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7238c6280d40d41901337e8a53e78cb2eed84f806ead8f353270bd399fbaa0cd"
+  },
+  "id": "fVDb1ThG1q6NO8P8",
+  "tags": []
+}

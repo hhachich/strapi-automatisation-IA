@@ -1,0 +1,282 @@
+{
+  "name": "strapi génération description",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1074144d-8f2a-4f7c-a4de-9479ca87af9b",
+      "name": "When clicking \"Test workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "1b181e76-da10-485d-89b3-aea38b84abbd",
+              "leftValue": "={{ $json.attributes.Description }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "1fdf99cd-4821-4463-ac2e-984eda3c493e",
+              "leftValue": "={{ $json.attributes.Title }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "48fbd986-8c90-4864-9159-5e8cf591d668",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1480,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": "={{ 1 }}",
+        "options": {}
+      },
+      "id": "a7f527e7-2384-41a9-880a-97568c94f070",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1800,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "13571591-699c-4c9c-b2ee-02129bfb04a9",
+              "name": "id",
+              "value": "={{ $('Loop Over Items').item.json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "8576c416-80a7-41c0-8bbb-946cdc0a1789",
+              "name": "Description",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2af98908-3fd7-4fa4-a586-f93fb7e02bbb",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        2440,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "contentType": "posts",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "14ce18f3-762d-4821-b3b4-7d92853ec50a",
+      "name": "getData",
+      "type": "n8n-nodes-base.strapi",
+      "typeVersion": 1,
+      "position": [
+        1260,
+        260
+      ],
+      "credentials": {
+        "strapiApi": {
+          "id": "ta2Pcj3sErKltQJw",
+          "name": "Strapi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "mistralai/Mistral-7B-Instruct-v0.3",
+        "options": {}
+      },
+      "id": "12387586-0170-467d-9e7d-c69780cfa58d",
+      "name": "Hugging Face Inference Model mistralai",
+      "type": "@n8n/n8n-nodes-langchain.lmOpenHuggingFaceInference",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        480
+      ],
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "QhGMVnWtrW2nMHZK",
+          "name": "HuggingFaceApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=génére une ourte description sur les oeuvres  {{ $json.attributes.Title }}"
+      },
+      "id": "286ef5b6-3912-4513-a536-a2b309865f87",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        2060,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "contentType": "={{ $('getData').params.contentType }}",
+        "columns": "=Description"
+      },
+      "id": "639c8256-88d7-43d5-9067-c6dae7b026b5",
+      "name": "updateData",
+      "type": "n8n-nodes-base.strapi",
+      "typeVersion": 1,
+      "position": [
+        2680,
+        260
+      ],
+      "credentials": {
+        "strapiApi": {
+          "id": "ta2Pcj3sErKltQJw",
+          "name": "Strapi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking \"Test workflow\"": {
+      "main": [
+        [
+          {
+            "node": "getData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "updateData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getData": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hugging Face Inference Model mistralai": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "updateData": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "708d5882-a44d-40be-b6ca-94e39de8ed28",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7238c6280d40d41901337e8a53e78cb2eed84f806ead8f353270bd399fbaa0cd"
+  },
+  "id": "ifmCTGmirWS9Hnd9",
+  "tags": []
+}

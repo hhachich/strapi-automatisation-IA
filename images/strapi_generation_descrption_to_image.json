@@ -1,0 +1,292 @@
+{
+  "name": "strapi generation descrption to image",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c9ac8f35-8a4a-4276-846a-d2055082eecf",
+      "name": "When clicking \"Test workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "d455c311-3ec2-4b58-97f9-99d02ecbae1f",
+              "leftValue": "={{ $json.attributes.description }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8f5cf85f-b60a-4c07-ad48-3b1c6d5a5e78",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": "={{1}}",
+        "options": {}
+      },
+      "id": "7e3c6de9-07ad-44d4-af3b-7893e8db1bcf",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2020,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "token",
+        "operation": "getAll",
+        "contentType": "post-description-to-images?populate=*",
+        "returnAll": true,
+        "options": {
+          "sort": [],
+          "where": "="
+        }
+      },
+      "id": "9e62c044-87fe-4fb2-ac03-9b41be1217af",
+      "name": "getData",
+      "type": "n8n-nodes-base.strapi",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        260
+      ],
+      "credentials": {
+        "strapiTokenApi": {
+          "id": "VzbVEn5mDFpPnD9v",
+          "name": "Strapi account API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "huggingFaceApi",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\"Authorization\": \"Bearer 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\"}",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "json",
+        "body": "={\n  \"inputs\": {{ $('getData').item.json.attributes.description }},\n  \"parameters\": {\n    \"max_new_tokens\": 64,\n    \"return_full_text\": false,\n    \"num_return_sequences\": 1,\n    \"do_sample\": true,\n    \"temperature\": 0.7,\n    \"top_k\": 50,\n    \"top_p\": 0.95,\n    \"repetition_penalty\": 1.0,\n    \"length_penalty\": 1.0,\n    \"use_cache\": true,\n    \"model_name_or_path\": \"stabilityai/stable-diffusion-xl-base-1.0\"\n  }\n} ",
+        "options": {}
+      },
+      "id": "af7a3bee-522e-4800-9468-7ef65c3d6fe7",
+      "name": "hugging face runwayml",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2280,
+        260
+      ],
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "oYbtvcqjHsRjjIa3",
+          "name": "HuggingFaceApi All "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "token",
+        "operation": "getAll",
+        "contentType": "post-description-to-images?populate=*",
+        "returnAll": true,
+        "options": {
+          "sort": [],
+          "where": "="
+        }
+      },
+      "id": "406cb2af-6e7a-4927-aac5-a643bc23ec55",
+      "name": "get all data strapi",
+      "type": "n8n-nodes-base.strapi",
+      "typeVersion": 1,
+      "position": [
+        2800,
+        260
+      ],
+      "credentials": {
+        "strapiTokenApi": {
+          "id": "VzbVEn5mDFpPnD9v",
+          "name": "Strapi account API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:1337/api/upload",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "strapiTokenApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "multipart/form-data"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ref",
+              "value": "api::post-description-to-image.post-description-to-image"
+            },
+            {
+              "name": "refId",
+              "value": "={{ $('Loop Over Items').item.json.id }}"
+            },
+            {
+              "name": "field",
+              "value": "image"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6f171abb-e09c-42ed-9ea0-6cab1c0b14d3",
+      "name": "Post Strapi",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2540,
+        260
+      ],
+      "credentials": {
+        "strapiTokenApi": {
+          "id": "HXsVcldc8UBUbT9H",
+          "name": "API Token n8n custom ALL"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking \"Test workflow\"": {
+      "main": [
+        [
+          {
+            "node": "getData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "hugging face runwayml",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getData": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "hugging face runwayml": {
+      "main": [
+        [
+          {
+            "node": "Post Strapi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get all data strapi": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Strapi": {
+      "main": [
+        [
+          {
+            "node": "get all data strapi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8f2d7690-25eb-4769-9a8b-4608acd28e1d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7238c6280d40d41901337e8a53e78cb2eed84f806ead8f353270bd399fbaa0cd"
+  },
+  "id": "62jYBU85QV8HlTSt",
+  "tags": []
+}
